@@ -1,0 +1,6 @@
+{
+  "name": "Redtail Marketing",
+  "description": "Creative agency specializing in digital dominance, high-fidelity design, and brand strategy.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
