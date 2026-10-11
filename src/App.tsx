@@ -9,8 +9,13 @@ import { useState, useEffect } from 'react';
 
 // --- Shared Components ---
 
-const Navbar = () => {
+interface NavbarProps {
+  onNavigateToPrivacy?: () => void;
+}
+
+const Navbar = ({ onNavigateToPrivacy }: NavbarProps) => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -24,20 +29,87 @@ const Navbar = () => {
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className={`text-2xl font-black tracking-tighter ${isScrolled ? 'text-redtail' : 'text-white'}`}
+          onClick={() => {
+            window.history.pushState({}, '', '/');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          className={`text-2xl font-black tracking-tighter cursor-pointer ${isScrolled ? 'text-redtail' : 'text-white'}`}
         >
           REDTAIL.
         </motion.div>
-        <div className={`hidden md:flex space-x-10 text-xs font-bold tracking-widest uppercase ${isScrolled ? 'text-neutral-900' : 'text-white'}`}>
+        <div className={`hidden md:flex items-center space-x-10 text-xs font-bold tracking-widest uppercase ${isScrolled ? 'text-neutral-900' : 'text-white'}`}>
           <a href="#work" className="hover:text-redtail transition-colors">Work</a>
           <a href="#services" className="hover:text-redtail transition-colors">Services</a>
           <a href="#about" className="hover:text-redtail transition-colors">About</a>
           <a href="#contact" className="hover:text-redtail transition-colors">Contact</a>
+          <a 
+            href="/privacy-policy-precious-metals" 
+            onClick={(e) => {
+              if (onNavigateToPrivacy) {
+                e.preventDefault();
+                onNavigateToPrivacy();
+              }
+            }}
+            className="hover:text-redtail transition-colors opacity-80 hover:opacity-100"
+          >
+            Privacy
+          </a>
         </div>
         <div className="md:hidden">
-          <Menu className={`w-6 h-6 ${isScrolled ? 'text-neutral-900' : 'text-white'}`} />
+          <button 
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)} 
+            aria-label="Toggle menu"
+            className="p-1"
+          >
+            <Menu className={`w-6 h-6 ${isScrolled ? 'text-neutral-900' : 'text-white'}`} />
+          </button>
         </div>
       </div>
+
+      {/* Mobile Drawer */}
+      {mobileMenuOpen && (
+        <div className="md:hidden bg-white/95 backdrop-blur-md border-b border-neutral-200 px-6 py-6 space-y-4 text-sm font-bold uppercase tracking-wider text-neutral-900 shadow-xl">
+          <a 
+            href="#work" 
+            onClick={() => setMobileMenuOpen(false)} 
+            className="block hover:text-redtail"
+          >
+            Work
+          </a>
+          <a 
+            href="#services" 
+            onClick={() => setMobileMenuOpen(false)} 
+            className="block hover:text-redtail"
+          >
+            Services
+          </a>
+          <a 
+            href="#about" 
+            onClick={() => setMobileMenuOpen(false)} 
+            className="block hover:text-redtail"
+          >
+            About
+          </a>
+          <a 
+            href="#contact" 
+            onClick={() => setMobileMenuOpen(false)} 
+            className="block hover:text-redtail"
+          >
+            Contact
+          </a>
+          <a 
+            href="/privacy-policy-precious-metals" 
+            onClick={(e) => {
+              e.preventDefault();
+              setMobileMenuOpen(false);
+              onNavigateToPrivacy?.();
+            }} 
+            className="block text-redtail hover:underline"
+          >
+            Privacy Policy (Precious Metals)
+          </a>
+        </div>
+      )}
     </nav>
   );
 };
@@ -233,14 +305,45 @@ const Contact = () => (
   </section>
 );
 
-const Footer = () => (
+import PrivacyPolicy from './components/PrivacyPolicy';
+
+interface FooterProps {
+  onNavigateToPrivacy?: () => void;
+}
+
+const Footer = ({ onNavigateToPrivacy }: FooterProps) => (
   <footer className="py-16 px-6 bg-white border-t border-neutral-100">
     <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center space-y-8 md:space-y-0">
       <div className="flex flex-col items-center md:items-start text-center md:text-left">
         <p className="text-xs font-black tracking-[0.4em] uppercase text-redtail mb-2">REDTAIL.</p>
-        <p className="text-[10px] uppercase font-bold tracking-widest text-neutral-400">© {new Date().getFullYear()} Redtail Marketing Group</p>
+        <p className="text-[10px] uppercase font-bold tracking-widest text-neutral-400">
+          © {new Date().getFullYear()} Redtail Marketing Group LLC • San Juan, PR
+        </p>
       </div>
-      <div className="flex space-x-12">
+
+      <div className="flex flex-wrap items-center justify-center gap-6 text-[10px] font-bold uppercase tracking-widest text-neutral-500">
+        <a 
+          href="/privacy-policy-precious-metals" 
+          onClick={(e) => {
+            if (onNavigateToPrivacy) {
+              e.preventDefault();
+              onNavigateToPrivacy();
+            }
+          }}
+          className="hover:text-redtail transition-colors border-b border-transparent hover:border-redtail pb-0.5"
+        >
+          Privacy Policy (Precious Metals Tracker)
+        </a>
+        <span className="text-neutral-300">•</span>
+        <a 
+          href="#contact" 
+          className="hover:text-redtail transition-colors"
+        >
+          Contact Support
+        </a>
+      </div>
+
+      <div className="flex space-x-8">
         <a href="#" className="flex items-center space-x-2 text-[10px] font-black uppercase tracking-[0.3em] hover:text-redtail transition-colors group">
           <Instagram className="w-4 h-4 group-hover:scale-110 transition-transform" />
           <span>Instagram</span>
@@ -255,9 +358,64 @@ const Footer = () => (
 );
 
 export default function App() {
+  const [currentRoute, setCurrentRoute] = useState<'home' | 'privacy'>(() => {
+    if (typeof window === 'undefined') return 'home';
+    const path = window.location.pathname.toLowerCase();
+    const hash = window.location.hash.toLowerCase();
+    const search = window.location.search.toLowerCase();
+    if (
+      path.includes('privacy') || 
+      hash.includes('privacy') || 
+      search.includes('page=privacy')
+    ) {
+      return 'privacy';
+    }
+    return 'home';
+  });
+
+  useEffect(() => {
+    const handleLocationChange = () => {
+      const path = window.location.pathname.toLowerCase();
+      const hash = window.location.hash.toLowerCase();
+      const search = window.location.search.toLowerCase();
+      if (
+        path.includes('privacy') || 
+        hash.includes('privacy') || 
+        search.includes('page=privacy')
+      ) {
+        setCurrentRoute('privacy');
+      } else {
+        setCurrentRoute('home');
+      }
+    };
+
+    window.addEventListener('popstate', handleLocationChange);
+    window.addEventListener('hashchange', handleLocationChange);
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+      window.removeEventListener('hashchange', handleLocationChange);
+    };
+  }, []);
+
+  const navigateTo = (route: 'home' | 'privacy') => {
+    setCurrentRoute(route);
+    if (route === 'privacy') {
+      window.history.pushState({}, '', '/privacy-policy-precious-metals');
+    } else {
+      window.history.pushState({}, '', '/');
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  if (currentRoute === 'privacy') {
+    return (
+      <PrivacyPolicy onBackToHome={() => navigateTo('home')} />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white">
-      <Navbar />
+      <Navbar onNavigateToPrivacy={() => navigateTo('privacy')} />
       <main>
         <Hero />
         <Work />
@@ -265,8 +423,9 @@ export default function App() {
         <About />
         <Contact />
       </main>
-      <Footer />
+      <Footer onNavigateToPrivacy={() => navigateTo('privacy')} />
     </div>
   );
 }
+
 
